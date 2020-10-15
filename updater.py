@@ -5,6 +5,7 @@
 
 import argparse
 import ipaddress
+import getpass
 import json
 import logging
 import os
@@ -190,6 +191,10 @@ def get_fqdn(host, domain):
     return "{}.{}".format(host.rstrip('.'), domain)
 
 
+def get_token_from_cli():
+    return getpass.getpass("Digital Ocean Access Token: ")
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-t", "--token", type=str, default=os.environ.get('DIGITAL_OCEAN_TOKEN'))
@@ -224,6 +229,9 @@ def main():
         args = parse_args()
         if args.quiet:
             logging.disable(logging.INFO)
+
+        if not args.token:
+            args.token = get_token_from_cli()
 
         if args.ip:
             ipaddr = args.ip
