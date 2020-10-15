@@ -5,17 +5,16 @@
 
 import argparse
 import ipaddress
+import getpass
 import json
-import sys
-import time
-import os
-import urllib.request
-import urllib.error
 import logging
-import copy
+import os
 import socket
 import struct
-from datetime import datetime
+import sys
+import time
+import urllib.error
+import urllib.request
 from functools import wraps
 
 CHECKIP_URL = "http://ipinfo.io/ip"
@@ -35,7 +34,9 @@ def retry(times=-1, delay=0.5, errors=(Exception,)):
                     if count == times:
                         raise e
                     time.sleep(delay)
+
         return wrapper
+
     return decorator
 
 
@@ -185,8 +186,14 @@ def get_local_internet_ip():
         s.close()
     return IP
 
+
 def get_fqdn(host, domain):
     return "{}.{}".format(host.rstrip('.'), domain)
+
+
+def get_token_from_cli():
+    return getpass.getpass("Digital Ocean Access Token: ")
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -196,7 +203,8 @@ def parse_args():
     parser.add_argument("--rtype", choices=['A', 'AAAA'], default='A')
     parser.add_argument("record", type=str)
     parser.add_argument("domain", type=str)
-    parser.add_argument("--ip", type=str, help='data field for the record such as ipv4 address, defaults to external ip if not set or local ip if --local given')
+    parser.add_argument("--ip", type=str,
+                        help='data field for the record such as ipv4 address, defaults to external ip if not set or local ip if --local given')
     parser.add_argument("--ttl", default='60', type=str)
     parser.add_argument("-q", "--quiet", action="store_true", help='Only display output on IP change')
     return parser.parse_args()
@@ -221,6 +229,9 @@ def main():
         args = parse_args()
         if args.quiet:
             logging.disable(logging.INFO)
+
+        if not args.token:
+            args.token = get_token_from_cli()
 
         if args.ip:
             ipaddr = args.ip
